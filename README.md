@@ -1,6 +1,6 @@
 # FastAPI PostgreSQL Custom Default Setup
 
-Ce projet est un setup minimal par défaut de projet backend réalisé avec FastAPI et utilisant PostgreSQL pour base de données avec SQLAlchemy comme ORM
+Ce projet est un setup minimal par défaut de projet backend réalisé avec FastAPI et utilisant PostgreSQL pour base de données avec SQLAlchemy comme ORM. Il intègere la fonctionnalité d'authentification de base avec gestion des roles et permissions.
 
 ---
 
@@ -26,7 +26,6 @@ Ce projet est un setup minimal par défaut de projet backend réalisé avec Fast
 - Python 3.10+
 - PostgreSQL
 - [Poetry](https://python-poetry.org/) ou pip
-<!--- Alembic (si vous utilisez la méthode Alembic)-->
 
 ---
 
