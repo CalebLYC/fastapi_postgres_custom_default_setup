@@ -19,8 +19,8 @@ from app.providers.providers import get_settings
 
 # Application Fastapi
 app = FastAPI(
-    title="Connect Cards",
-    description="Backend de Connect Cards: application d'authentification des utilisateurs par carte NFC.",
+    title="FastAPI Postgres Custom Template",
+    description="Backend de FastAPI Postgres Custom Template: ....",
 )
 
 # Origins autorisés
@@ -52,9 +52,9 @@ app.include_router(setup_controller.router)
 @app.get("/")
 async def root(settings: Settings = Depends(get_settings)):
     return {
-        "msg": "Bienvenue sur l'API Connect Cards !",
+        "msg": "Bienvenue sur l'API de ...!",
         "documentation": f"{settings.base_url}/docs",
-        "description": "Backend de Connect Cards: application d'authentification des utilisateurs par carte NFC.",
+        "description": "Backend de ...: ....",
         "version": "1.0.0",
     }
 
