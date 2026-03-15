@@ -1,12 +1,12 @@
-# ConnectCards Backend
+# FastAPI PostgreSQL Custom Default Setup
 
-Backend API pour de Connect Cards pour l'authentification par carte avec **FastAPI**, **SQLAlchemy** et **PostgreSQL**.
+Ce projet est un setup minimal par défaut de projet backend réalisé avec FastAPI et utilisant PostgreSQL pour base de données avec SQLAlchemy comme ORM
 
 ---
 
 ## Sommaire
 
-- [ConnectCards Backend](#connectcards-backend)
+- [FastAPI PostgreSQL Custom Default Setup](#fastapi-postgresql-custom-default-setup)
   - [Sommaire](#sommaire)
   - [Prérequis](#prérequis)
   - [Installation](#installation)
@@ -35,7 +35,7 @@ Backend API pour de Connect Cards pour l'authentification par carte avec **FastA
 1. Cloner le dépôt et se placer dans le projet :
 
    ```bash
-   git clone https://github.com/tonrepo/connect_card_backend.git
+   git clone https://github.com/CalebLYC/fastapi_postgres_custom_default_setup
    cd connect_card_backend
    ```
 
@@ -162,14 +162,15 @@ Documentation interactive :
 app/
 │
 ├── core/                # Configurations & sécurité (config.py, jwt.py, security.py, etc.)
-├── controllers/         # Endpoints FastAPI
-├── db/                  # Connexion DB & Repositories
-│   └── repositories/    # Classes repository par entité
-├── models/              # Modèles SQLAlchemy
-├── providers/           # Providers & middlewares (auth_middleware, role_middleware, etc.)
+├── db/                  # Connexion DB
+│   └── db_client.py     # Fichier initiant la connexion à la db et une fonction de cloture de la session
+├── models/              # Modèles SQLAlchemy représentant la structure exacte des données en base de données
+├── repositories/        # Classes repository par entité avec des méthodes effectuant les opérations CRUD sur la table en question
 ├── services/            # Logique métier
+├── schemas/              # Modèles/Schémas Pydantic représentant les réponses et le corps des requêtes des différents endpoints
+├── providers/           # Providers & middlewares (auth_middleware, role_middleware, etc.)
+├── controllers/         # Endpoints FastAPI
 ├── utils/               # Fonctions utilitaires
-│
 scripts/
 ├── seeds/               # Scripts d’insertion de données initiales
 └── sql/                 # Scripts SQL manuels
