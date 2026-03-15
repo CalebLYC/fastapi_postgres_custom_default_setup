@@ -226,6 +226,6 @@ migrations/              # Versions Alembic
 
 ## Auteur
 
-ConnectInc / CalebLyc
+  CalebLyc
 
 ---
