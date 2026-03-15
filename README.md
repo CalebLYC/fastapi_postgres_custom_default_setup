@@ -226,6 +226,6 @@ migrations/              # Versions Alembic
 
 ## Auteur
 
-  CalebLyc
+  [CalebLyc](https://github.com/CalebLYC)
 
 ---
