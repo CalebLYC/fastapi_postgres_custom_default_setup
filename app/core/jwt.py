@@ -17,7 +17,7 @@ class JWTUtils:
     @staticmethod
     def create_access_token(
         data: dict, expires_delta: datetime.timedelta = None
-    ) -> tuple[str, datetime.datetime]:
+    ) -> tuple[str, datetime.datetime | None]:
         """Create an access token with the given data and expiration time.
 
         Args:
@@ -30,15 +30,25 @@ class JWTUtils:
         # S'assurer que le singleton est instancié
         if JWTUtils._settings is None:
             JWTUtils()
+
         to_encode = data.copy()
-        expire = datetime.datetime.now(datetime.timezone.utc) + (
-            expires_delta
-            if expires_delta
-            else datetime.timedelta(
-                (JWTUtils._settings.access_token_expire_weeks) * 10080
+
+        expire: datetime.datetime | None = None
+        if "exp" in to_encode:
+            # Respect explicit expiration provided by caller (including None).
+            expire = to_encode.get("exp")
+        elif expires_delta is not None:
+            expire = datetime.datetime.now(datetime.timezone.utc) + expires_delta
+        else:
+            expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+                minutes=(JWTUtils._settings.access_token_expire_weeks * 10080)
             )
-        )
-        to_encode.update({"exp": expire})
+
+        if expire is not None:
+            to_encode.update({"exp": expire})
+        else:
+            to_encode.pop("exp", None)
+
         return (
             jwt.encode(
                 to_encode,

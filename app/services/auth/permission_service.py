@@ -32,7 +32,7 @@ class PermissionService:
     async def get_permission_by_code(self, code: str) -> Optional[PermissionReadSchema]:
         """Retrieve a permission by its code."""
         permission = await self.permission_repos.find_by_code(code)
-        if permission:
+        if not permission:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found"
             )

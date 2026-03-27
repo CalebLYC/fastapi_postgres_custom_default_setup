@@ -105,6 +105,7 @@ async def create_user(
 async def update_user(
     id: str = Path(..., min_length=24, max_length=36),
     user_update: UserUpdateByAdminSchema = ...,
+    current_user: User = Depends(auth_middleware),
     service: UserService = Depends(get_user_service),
 ):
     """Update a user by its ID.
@@ -117,7 +118,7 @@ async def update_user(
     Returns:
         UserReadSchema: The updated user's data validated against the UserReadSchema.
     """
-    return await service.update_user(id, user_update)
+    return await service.update_user(id, user_update, actor=current_user)
 
 
 @router.delete(
@@ -125,6 +126,7 @@ async def update_user(
 )
 async def delete_user(
     id: str = Path(..., min_length=24, max_length=36),
+    current_user: User = Depends(auth_middleware),
     service: UserService = Depends(get_user_service),
 ):
     """Delete a user by its ID.
@@ -136,7 +138,7 @@ async def delete_user(
     Returns:
         Bool: A confirmation message indicating the user was deleted.
     """
-    await service.delete_user(id)
+    await service.delete_user(id, actor=current_user)
     return {"detail": "User deleted"}
 
 
@@ -148,6 +150,7 @@ async def delete_user(
 async def add_roles_to_user(
     id: str = Path(..., min_length=24, max_length=36),
     roles_to_add: List[str] = ...,
+    current_user: User = Depends(auth_middleware),
     service: UserService = Depends(get_user_service),
 ):
     """Add roles to a user.
@@ -160,7 +163,7 @@ async def add_roles_to_user(
     Returns:
         UserReadSchema: The updated user's data validated against the UserReadSchema.
     """
-    return await service.add_roles_to_user(id, roles_to_add)
+    return await service.add_roles_to_user(id, roles_to_add, actor=current_user)
 
 
 @router.patch(
@@ -171,6 +174,7 @@ async def add_roles_to_user(
 async def remove_roles_from_user(
     id: str = Path(..., min_length=24, max_length=36),
     roles_to_remove: List[str] = ...,
+    current_user: User = Depends(auth_middleware),
     service: UserService = Depends(get_user_service),
 ):
     """Remove roles from a user.
@@ -183,7 +187,7 @@ async def remove_roles_from_user(
     Returns:
         UserReadSchema: The updated user's data validated against the UserReadSchema.
     """
-    return await service.remove_roles_from_user(id, roles_to_remove)
+    return await service.remove_roles_from_user(id, roles_to_remove, actor=current_user)
 
 
 @router.patch(
@@ -194,6 +198,7 @@ async def remove_roles_from_user(
 async def add_permissions_to_user(
     id: str = Path(..., min_length=24, max_length=36),
     permissions_to_add: List[str] = ...,
+    current_user: User = Depends(auth_middleware),
     service: UserService = Depends(get_user_service),
 ):
     """Add permissions to a user.
@@ -206,7 +211,7 @@ async def add_permissions_to_user(
     Returns:
         UserReadSchema: The updated user's data validated against the UserReadSchema.
     """
-    return await service.add_permissions_to_user(id, permissions_to_add)
+    return await service.add_permissions_to_user(id, permissions_to_add, actor=current_user)
 
 
 @router.patch(
@@ -217,6 +222,7 @@ async def add_permissions_to_user(
 async def remove_permissions_from_user(
     id: str = Path(..., min_length=24, max_length=36),
     permissions_to_remove: List[str] = ...,
+    current_user: User = Depends(auth_middleware),
     service: UserService = Depends(get_user_service),
 ):
     """Remove permissions from a user.
@@ -229,4 +235,4 @@ async def remove_permissions_from_user(
     Returns:
         UserReadSchema: The updated user's data validated against the UserReadSchema.
     """
-    return await service.remove_permissions_from_user(id, permissions_to_remove)
+    return await service.remove_permissions_from_user(id, permissions_to_remove, actor=current_user)

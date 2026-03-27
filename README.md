@@ -35,7 +35,7 @@ Ce projet est un setup minimal par défaut de projet backend réalisé avec Fast
 
    ```bash
    git clone https://github.com/CalebLYC/fastapi_postgres_custom_default_setup
-   cd connect_card_backend
+  cd fastapi_postgres_custom_default_setup
    ```
 
 2. Créer et activer un environnement virtuel :
@@ -56,10 +56,10 @@ pip install -r requirements.txt
 
 ## Configuration
 
-1. Créer le fichier `.env` à partir de `.env.exemple` et adapter les valeurs :
+1. Créer le fichier `.env` à partir de `.env.example` et adapter les valeurs :
 
    ```bash
-   cp .env.exemple .env
+  cp .env.example .env
    ```
 
      - Synchrone (driver par défaut) :
@@ -134,8 +134,8 @@ Vous pouvez **choisir entre Alembic ou scripts SQL manuels**.
 
 | Étape                         | Alembic                                                   | Scripts SQL manuels                                       |
 | ----------------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
-| Générer la structure initiale | `alembic revision --autogenerate -m "Initial tables"`     | Non nécessaire (tables dans `scripts/sql/schema.sql`)     |
-| Appliquer les migrations      | `alembic upgrade head`                                    | `psql -U user -d connect_cards -f scripts/sql/schema.sql` |
+| Générer la structure initiale | `alembic revision --autogenerate -m "Initial tables"`     | Non nécessaire (tables dans `scripts/sql/001_create_users_roles_permissions_access_token.sql`)     |
+| Appliquer les migrations      | `alembic upgrade head`                                    | `psql -U user -d connect_cards -f scripts/sql/001_create_users_roles_permissions_access_token.sql` |
 | Seeds / données initiales     | Ajouter une migration spécifique ou `scripts/seeds/*.sql` | `psql -U user -d connect_cards -f scripts/seeds/*.sql`    |
 | Notes                         | Alembic utilise `psycopg2` par défaut, fiable             | Permet de gérer la DB sans Alembic                        |
 
@@ -218,7 +218,7 @@ migrations/              # Versions Alembic
 - **Driver PostgreSQL** : assurez-vous que `psycopg2` (synchrone) ou `asyncpg` (asynchrone) correspond à votre configuration.
 - **Fuseau horaire dans DateTime** : SQLAlchemy convertit automatiquement `datetime` naïf en UTC, mais certaines opérations peuvent lever des erreurs si un timezone est présent.
 - **Alembic + asyncpg** : si vous utilisez asyncpg, Alembic fonctionne toujours avec psycopg2 pour les migrations, même si votre app est asynchrone.
-- **Ordre d’exécution des scripts SQL** : exécuter d’abord `schema.sql`, puis les fichiers `seeds`.
+- **Ordre d’exécution des scripts SQL** : exécuter d’abord `001_create_users_roles_permissions_access_token.sql`, puis les fichiers `seeds`.
 - **Permissions PostgreSQL** : assurez-vous que l’utilisateur a les droits CREATE et INSERT sur la base.
 - **Backups** : toujours tester sur une DB de dev avant d’appliquer les migrations en prod.
 

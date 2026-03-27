@@ -26,6 +26,15 @@ class SetupService:
         self.permission_repos = permission_repos
         self.settings = settings
 
+    async def _ensure_bootstrap_only(self) -> None:
+        # Setup endpoints are intended for first-run initialization only.
+        existing_users = await self.user_repos.list_users(skip=0, limit=1, all=False)
+        if existing_users:
+            raise HTTPException(
+                status_code=403,
+                detail="Setup endpoints are disabled after initialization.",
+            )
+
 
     async def setup_superadmin(self) -> dict:
         """Set up the superadmin user.
@@ -34,6 +43,8 @@ class SetupService:
             Returns:
                 dict: Success message.
         """
+        await self._ensure_bootstrap_only()
+
         superadmin_email = self.settings.admin_email or "superadmin@example.com"
         superadmin_password = self.settings.admin_password
         if not superadmin_password:
@@ -84,6 +95,8 @@ class SetupService:
             Returns:
                 dict: Success message.
         """
+        await self._ensure_bootstrap_only()
+
         # Create default roles if they don't exist
         roles = [
             {"name": "superadmin", "description": "Superadmin role with all permissions"},

@@ -8,6 +8,9 @@ from app.schemas.user_schema import LazyUserReadSchema, UserCreateSchema, UserUp
 from fastapi import HTTPException, status
 
 
+SUPERADMIN_ROLE_NAME = "superadmin"
+
+
 class UserService:
     def __init__(
         self,
@@ -18,6 +21,22 @@ class UserService:
         self.user_repos = user_repos
         self.role_repos = role_repos
         self.permission_repos = permission_repos
+
+    def _has_role_name(self, user: User, role_name: str) -> bool:
+        return any(role.name == role_name for role in user.roles)
+
+    async def _get_superadmin_role_id(self) -> str:
+        superadmin_role = await self.role_repos.find_by_name(name=SUPERADMIN_ROLE_NAME)
+        if not superadmin_role:
+            raise HTTPException(status_code=500, detail="Superadmin role not found")
+        return str(superadmin_role.id)
+
+    def _ensure_superadmin_actor(self, actor: Optional[User]) -> None:
+        if not actor or not actor.is_superuser():
+            raise HTTPException(
+                status_code=403,
+                detail="Only superadmin can perform this action.",
+            )
 
 
     async def get_user(self, user_id: str) -> Optional[UserReadSchema]:
@@ -97,7 +116,10 @@ class UserService:
         return LazyUserReadSchema.model_validate(created)
 
     async def update_user(
-        self, user_id: str, user_update: UserUpdateByAdminSchema
+        self,
+        user_id: str,
+        user_update: UserUpdateByAdminSchema,
+        actor: Optional[User] = None,
     ) -> LazyUserReadSchema:
         """Update an existing user.
 
@@ -127,6 +149,21 @@ class UserService:
             update_data["password"] = SecurityUtils.hash_password(
                 update_data.pop("password")
             )
+
+        if self._has_role_name(user, SUPERADMIN_ROLE_NAME):
+            self._ensure_superadmin_actor(actor)
+
+            if update_data.get("is_active") is False:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Superadmin user cannot be deactivated.",
+                )
+
+            if update_data.get("is_verified") is False:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Superadmin user cannot be unverified.",
+                )
             
         for key, value in update_data.items():
             setattr(user, key, value)
@@ -159,7 +196,7 @@ class UserService:
         updated = await self.user_repos.update(user)
         return UserReadSchema.model_validate(updated)
 
-    async def delete_user(self, user_id: str) -> None:
+    async def delete_user(self, user_id: str, actor: Optional[User] = None) -> None:
         """Delete a user by its ID.
 
         Args:
@@ -171,17 +208,27 @@ class UserService:
         user = await self.user_repos.find_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+
+        if self._has_role_name(user, SUPERADMIN_ROLE_NAME):
+            raise HTTPException(
+                status_code=403,
+                detail="Superadmin user cannot be deleted.",
+            )
+
         await self.user_repos.delete(user)
         
         
     async def add_roles_to_user(
-        self, role_id: str, roles_to_add: List[str]
+        self,
+        user_id: str,
+        roles_to_add: List[str],
+        actor: Optional[User] = None,
     ) -> UserReadSchema:
         """
         Assigns new roles to an existing user.
 
         Args:
-            role_id (str): The id of the role to update.
+            user_id (str): The id of the user to update.
             roles_to_add (List[str]): A list of role codes to add.
 
         Returns:
@@ -190,10 +237,13 @@ class UserService:
         Raises:
             HTTPException: If the user is not found or any role is invalid.
         """
+        if not roles_to_add:
+            raise HTTPException(status_code=400, detail="No roles provided.")
+
         # Récupérer l'utilisateur
-        user = await self.user_repos.find_by_id(id=role_id)
+        user = await self.user_repos.find_by_id(id=user_id)
         if not user:
-            raise HTTPException(status_code=404, detail=f"User '{role_id}' not found.")
+            raise HTTPException(status_code=404, detail=f"User '{user_id}' not found.")
 
         # Valider si toutes les rôles à ajouter existent
         existing_roles = await self.role_repos.find_many_by_ids(ids=roles_to_add)
@@ -208,6 +258,10 @@ class UserService:
                 detail=f"Roles not found: {', '.join(invalid_roles)}. Please create them first.",
             )
 
+        superadmin_role_id = await self._get_superadmin_role_id()
+        if superadmin_role_id in roles_to_add:
+            self._ensure_superadmin_actor(actor)
+
         # Ajouter les rôles à la relation
         for role in existing_roles:
             if role not in user.roles:
@@ -217,13 +271,16 @@ class UserService:
         updated = await self.user_repos.update(user)
         if not updated:
             raise HTTPException(status_code=500, detail="Failed to update user roles.")
-        user = await self.user_repos.find_by_id(id=role_id)
+        user = await self.user_repos.find_by_id(id=user_id)
         # Retourner l'utilisateur mis à jour
         return UserReadSchema.model_validate(user)
     
     
     async def remove_roles_from_user(
-        self, user_id: str, roles_to_remove: List[str]
+        self,
+        user_id: str,
+        roles_to_remove: List[str],
+        actor: Optional[User] = None,
     ) -> UserReadSchema:
         """
         Removes specified roles from an existing user.
@@ -242,6 +299,20 @@ class UserService:
         user = await self.user_repos.find_by_id(id=user_id)
         if not user:
             raise HTTPException(status_code=404, detail=f"User '{user_id}' not found.")
+
+        if not roles_to_remove:
+            raise HTTPException(status_code=400, detail="No roles provided.")
+
+        superadmin_role_id = await self._get_superadmin_role_id()
+
+        if superadmin_role_id in roles_to_remove and self._has_role_name(user, SUPERADMIN_ROLE_NAME):
+            raise HTTPException(
+                status_code=403,
+                detail="Superadmin role cannot be removed from a superadmin user.",
+            )
+
+        if superadmin_role_id in roles_to_remove:
+            self._ensure_superadmin_actor(actor)
         
         # Retirer les rôles de la relation
         user_role_ids = {str(r.id) for r in user.roles}
@@ -259,13 +330,16 @@ class UserService:
 
 
     async def add_permissions_to_user(
-        self, role_id: str, permissions_to_add: List[str]
+        self,
+        user_id: str,
+        permissions_to_add: List[str],
+        actor: Optional[User] = None,
     ) -> UserReadSchema:
         """
         Assigns new permissions to an existing user.
 
         Args:
-            role_id (str): The id of the role to update.
+            user_id (str): The id of the user to update.
             permissions_to_add (List[str]): A list of permission codes to add.
 
         Returns:
@@ -274,10 +348,16 @@ class UserService:
         Raises:
             HTTPException: If the user is not found or any permission is invalid.
         """
+        if not permissions_to_add:
+            raise HTTPException(status_code=400, detail="No permissions provided.")
+
         # Récupérer l'utilisateur
-        user = await self.user_repos.find_by_id(id=role_id)
+        user = await self.user_repos.find_by_id(id=user_id)
         if not user:
-            raise HTTPException(status_code=404, detail=f"User '{role_id}' not found.")
+            raise HTTPException(status_code=404, detail=f"User '{user_id}' not found.")
+
+        if self._has_role_name(user, SUPERADMIN_ROLE_NAME):
+            self._ensure_superadmin_actor(actor)
 
         # Valider si toutes les permissions à ajouter existent
         existing_permissions = await self.permission_repos.find_many_by_ids(ids=permissions_to_add)
@@ -307,7 +387,10 @@ class UserService:
 
 
     async def remove_permissions_from_user(
-        self, user_id: str, permissions_to_remove: List[str]
+        self,
+        user_id: str,
+        permissions_to_remove: List[str],
+        actor: Optional[User] = None,
     ) -> UserReadSchema:
         """
         Removes specified permissions from an existing user.
@@ -326,6 +409,12 @@ class UserService:
         user = await self.user_repos.find_by_id(id=user_id)
         if not user:
             raise HTTPException(status_code=404, detail=f"User '{user_id}' not found.")
+
+        if not permissions_to_remove:
+            raise HTTPException(status_code=400, detail="No permissions provided.")
+
+        if self._has_role_name(user, SUPERADMIN_ROLE_NAME):
+            self._ensure_superadmin_actor(actor)
         
         # Retirer les permissions de la relation
         user_permission_ids = {str(p.id) for p in user.permissions}

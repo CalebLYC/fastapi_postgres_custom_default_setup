@@ -6,6 +6,10 @@ from fastapi import HTTPException, status
 
 from app.schemas.role_schema import RoleCreateSchema, RoleReadSchema, RoleUpdateSchema, LazyRoleReadSchema
 
+
+SUPERADMIN_ROLE_NAME = "superadmin"
+
+
 class RoleService:
     def __init__(
         self,
@@ -14,6 +18,13 @@ class RoleService:
     ):
         self.role_repos = role_repos
         self.permission_repos = permission_repos
+
+    def _ensure_role_not_superadmin(self, role: Role) -> None:
+        if role.name == SUPERADMIN_ROLE_NAME:
+            raise HTTPException(
+                status_code=403,
+                detail="Superadmin role is protected and cannot be modified.",
+            )
 
 
     async def get_role(self, role_id: str) -> Optional[RoleReadSchema]:
@@ -48,7 +59,7 @@ class RoleService:
             Optional[RoleReadSchema]: The role data if found, otherwise None.
         """
         role = await self.role_repos.find_by_name(name)
-        if role:
+        if not role:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
             )
@@ -111,6 +122,8 @@ class RoleService:
         if not role:
             raise HTTPException(status_code=404, detail="Role not found")
 
+        self._ensure_role_not_superadmin(role)
+
         update_data = role_update.model_dump(exclude_unset=True)
         if "name" in update_data:
             existing = await self.role_repos.find_by_name(update_data["name"])
@@ -140,6 +153,8 @@ class RoleService:
         role = await self.role_repos.find_by_id(role_id)
         if not role:
             raise HTTPException(status_code=404, detail="Role not found")
+
+        self._ensure_role_not_superadmin(role)
         await self.role_repos.delete(role)
 
     async def delete_all_roles(self) -> None:
@@ -174,6 +189,8 @@ class RoleService:
         role = await self.role_repos.find_by_id(id=role_id)
         if not role:
             raise HTTPException(status_code=404, detail=f"Role '{role_id}' not found.")
+
+        self._ensure_role_not_superadmin(role)
 
         # Valider si toutes les permissions à ajouter existent
         existing_permissions = await self.permission_repos.find_many_by_ids(ids=permissions_to_add)
@@ -222,6 +239,8 @@ class RoleService:
         role = await self.role_repos.find_by_id(id=role_id)
         if not role:
             raise HTTPException(status_code=404, detail=f"Role '{role_id}' not found.")
+
+        self._ensure_role_not_superadmin(role)
         
         # Retirer les permissions de la relation
         role_permission_ids = {str(p.id) for p in role.permissions}

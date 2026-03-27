@@ -29,13 +29,9 @@ class SecurityUtils:
         if SecurityUtils._pwd_context is None:
             SecurityUtils()
     
-        # Debugging: Log original password length
-        print(f"Original password length: {len(password)}")
-    
         # Truncate password if longer than 72 bytes
         if len(password) > 72:
             password = password[:72]
-            print("Password truncated to 72 bytes.")
     
         return SecurityUtils._pwd_context.hash(password)
     
@@ -55,6 +51,7 @@ class SecurityUtils:
             SecurityUtils()
         return SecurityUtils._pwd_context.verify(plain, hashed)
 
+    @staticmethod
     def generate_random_password(length: int = 12) -> str:
         """Generate a random password.
 

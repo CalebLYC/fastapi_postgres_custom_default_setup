@@ -39,18 +39,21 @@ class AuthService:
         Returns:
             str: The ID of the generated access token.
         """
-        expire = None
-        if expires_in_minutes:
-            expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
-                minutes=expires_in_minutes
-            )
         payload = {
             "sub": str(user_id),
-            "exp": expire if expire else None,
             "iat": datetime.datetime.now(datetime.timezone.utc),
         }
+
+        expires_delta = None
+        if expires_in_minutes is not None:
+            expires_delta = datetime.timedelta(minutes=expires_in_minutes)
+        else:
+            # Explicitly request a non-expiring token.
+            payload["exp"] = None
+
         token, expires_at = JWTUtils.create_access_token(
-            data=payload, expires_delta=expire if expire else None
+            data=payload,
+            expires_delta=expires_delta,
         )
         token_doc = AccessToken(
             token=token,
@@ -59,7 +62,7 @@ class AuthService:
             revoked=False,
         )
         db_token =await self.access_token_repos.create(access_token=token_doc)
-        return db_token.id
+        return str(db_token.id)
 
     async def revoke_access_token(self, token: str) -> bool:
         """Revoke an access token.
@@ -207,12 +210,12 @@ class AuthService:
         """
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        user_id = user.id
+        user_id = str(user.id)
 
         update_data = user_update.model_dump(exclude_unset=True)
         if "email" in update_data:
             existing = await self.user_repos.find_by_email(update_data["email"])
-            if existing and str(existing.id) != user_id:
+            if existing and str(existing.id) != str(user_id):
                 raise HTTPException(status_code=400, detail="Email already registered")
 
         if "password" in update_data:
@@ -227,7 +230,7 @@ class AuthService:
         updated = await self.user_repos.update(user)
         if not updated:
             raise HTTPException(status_code=500, detail="Update failed")
-        return UserReadSchema.model_validate(updated)
+        return LazyUserReadSchema.model_validate(updated)
 
     async def change_password(
         self,

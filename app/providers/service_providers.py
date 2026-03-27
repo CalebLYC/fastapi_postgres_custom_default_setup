@@ -44,7 +44,7 @@ def get_user_service(
 def get_auth_service(
     user_repos: UserRepository = Depends(get_user_repository),
     access_token_repos: AccessTokenRepository = Depends(get_access_token_repository),
-) -> UserService:
+) -> AuthService:
     return AuthService(
         user_repos = user_repos,
         access_token_repos = access_token_repos

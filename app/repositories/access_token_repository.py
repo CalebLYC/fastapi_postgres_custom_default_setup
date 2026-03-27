@@ -59,6 +59,15 @@ class AccessTokenRepository:
         await self.db.commit()
         await self.db.refresh(access_token)
         return access_token
+
+
+    async def revoke(self, id: str) -> bool:
+        access_token = await self.find_by_id(id=id)
+        if not access_token:
+            return False
+        access_token.revoked = True
+        await self.db.commit()
+        return True
     
 
     async def delete(self, access_token: AccessToken) -> None:
