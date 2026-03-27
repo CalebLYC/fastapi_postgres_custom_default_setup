@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from app.controllers import setup_controller
 from app.controllers.auth import (
     # google_auth_controller,
-    # otp_controller,
+    otp_controller,
     permission_controller,  # Décommenter cette ligne
     # role_controller,
     auth_controller,
@@ -42,7 +42,7 @@ app.add_middleware(
 # Ajout des controllers/routers
 app.include_router(auth_controller.router)
 app.include_router(user_controller.router)
-# app.include_router(otp_controller.router)
+app.include_router(otp_controller.router)
 app.include_router(role_controller.router)
 app.include_router(permission_controller.router)
 app.include_router(setup_controller.router)

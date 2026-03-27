@@ -5,6 +5,7 @@ from app.repositories.access_token_repository import AccessTokenRepository
 from app.repositories.role_repository import RoleRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.permission_repository import PermissionRepository
+from app.repositories.otp_repository import OTPRepository
 
 from app.services.auth.permission_service import PermissionService
 from app.providers.repository_providers import (
@@ -12,10 +13,12 @@ from app.providers.repository_providers import (
     get_role_repository,
     get_user_repository,
     get_permission_repository,
+    get_otp_repository,
 )
 from app.services.auth.auth_service import AuthService
 from app.services.auth.role_service import RoleService
 from app.services.auth.user_service import UserService
+from app.services.auth.otp_service import OTPService
 from app.services.setup_service import SetupService
 
 
@@ -63,6 +66,14 @@ def get_permission_service(
     permission_repos: PermissionRepository = Depends(get_permission_repository),
 ) -> PermissionService:
     return PermissionService(permission_repos=permission_repos)
+
+
+def get_otp_service(
+    otp_repos: OTPRepository = Depends(get_otp_repository),
+    user_repos: UserRepository = Depends(get_user_repository),
+) -> OTPService:
+    return OTPService(otp_repos=otp_repos, user_repos=user_repos)
+
 
 def get_setup_service(
     user_repos: UserRepository = Depends(get_user_repository),
