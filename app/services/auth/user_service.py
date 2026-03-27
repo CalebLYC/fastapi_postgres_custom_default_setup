@@ -4,7 +4,7 @@ from app.repositories.permission_repository import PermissionRepository
 from app.repositories.role_repository import RoleRepository
 from app.repositories.user_repository import UserRepository
 from app.models.user import User
-from app.schemas.user_schema import LazyUserReadSchema, UserCreateSchema, UserUpdateSchema, UserReadSchema
+from app.schemas.user_schema import LazyUserReadSchema, UserCreateSchema, UserUpdateByAdminSchema, UserReadSchema
 from fastapi import HTTPException, status
 
 
@@ -97,13 +97,13 @@ class UserService:
         return LazyUserReadSchema.model_validate(created)
 
     async def update_user(
-        self, user_id: str, user_update: UserUpdateSchema
+        self, user_id: str, user_update: UserUpdateByAdminSchema
     ) -> LazyUserReadSchema:
         """Update an existing user.
 
         Args:
             user_id (str): The ID of the user to update.
-            user_update (UserUpdateSchema): The user data to update.
+            user_update (UserUpdateByAdminSchema): The user data to update.
 
         Raises:
             HTTPException: 404 Not Found if the user does not exist.

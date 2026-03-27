@@ -48,6 +48,37 @@ class UserUpdateSchema(BaseModel):
     birthday_date: Optional[datetime.datetime] = Field(
         default=None, example="2004-01-01T00:00:00"
     )
+    picture: Optional[str] = Field(
+        default=None, example="https://example.com/picture.jpg"
+    )
+    locale: Optional[str] = Field(default=None, example="en-US")
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "email": "jdoe@example.com",
+                "full_name": "John Doe",
+                "password": "12345678",
+                "phone_number": "90000000",
+                "sex": "F",
+                "birthday_date": "2004-01-01T00:00:00",
+                "picture": "https://example.com/picture.jpg",
+                "locale": "en-US",
+            }
+        },
+    )
+    
+    
+class UserUpdateByAdminSchema(BaseModel):
+    email: Optional[EmailStr] = Field(default=None, example="jdoe@example.com")
+    password: Optional[str] = Field(default=None, example="12345678")
+    full_name: Optional[str] = Field(default=None, example="John Doe")
+    phone_number: Optional[str] = Field(default=None, example="90000000")
+    sex: Optional[SexEnum] = Field(default=None, example="F")
+    birthday_date: Optional[datetime.datetime] = Field(
+        default=None, example="2004-01-01T00:00:00"
+    )
     is_active: Optional[bool] = Field(default=None, example=True)
     is_verified: Optional[bool] = Field(default=None, example=True)
     picture: Optional[str] = Field(
@@ -72,6 +103,7 @@ class UserUpdateSchema(BaseModel):
             }
         },
     )
+
 
 
 class UserReadSchema(BaseModel):

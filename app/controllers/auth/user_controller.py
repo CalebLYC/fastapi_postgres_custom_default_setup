@@ -3,7 +3,7 @@ from typing import List
 from app.models.user import User
 from app.providers.auth_provider import auth_middleware, require_permission
 from app.providers.service_providers import get_user_service
-from app.schemas.user_schema import LazyUserReadSchema, UserCreateSchema, UserUpdateSchema, UserReadSchema
+from app.schemas.user_schema import LazyUserReadSchema, UserCreateSchema, UserUpdateByAdminSchema, UserReadSchema
 from app.services.auth.user_service import UserService
 from app.utils.constants import http_status
 
@@ -104,14 +104,14 @@ async def create_user(
 @router.put("/{id}", response_model=LazyUserReadSchema, summary="Update a user by ID")
 async def update_user(
     id: str = Path(..., min_length=24, max_length=36),
-    user_update: UserUpdateSchema = ...,
+    user_update: UserUpdateByAdminSchema = ...,
     service: UserService = Depends(get_user_service),
 ):
     """Update a user by its ID.
 
     Args:
         id (str, optional): The ID of the user to update. Must be a valid length.
-        user_update (UserUpdateSchema, optional): The user data to update, validated against the UserUpdateSchema.
+        user_update (UserUpdateByAdminSchema, optional): The user data to update, validated against the UserUpdateByAdminSchema.
         service (UserService, optional): User service dependency.
 
     Returns:
